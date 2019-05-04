@@ -70,10 +70,17 @@ class Solution {
 };
 
 int main(){
-  int arr[] = {-1,-1,0,-2,3,4,0,0};
+  int arr[] = {-1,-1,0,-2,2,3,4,0,0};
   int size = sizeof(arr)/sizeof(arr[0]);
-  vector<int> nums(arr,arr+size-1);
+  vector<int> nums(arr,arr+size);
   Solution test;
   vector<vector<int> > result(test.threeSum(nums));
+  int end = result.size();
+  for(int i = 0;i<end;i++){
+    for(int j = 0;j<3;j++){
+      cout<<" "<<result[i][j];
+    }
+    cout<<endl;
+  }
   return 0;
 }
