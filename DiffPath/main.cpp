@@ -13,7 +13,7 @@ class Solution {
         count++;
         return;
       }
-      for(int i =0;i<4;i++){
+      for(int i =0;i<2;i++){
         int new_x = x+action[i][0];
         int new_y = y+action[i][1];
         if(new_x<m&&new_x>=0&&new_y<n&&new_y>=0){
@@ -22,7 +22,7 @@ class Solution {
       }
       return;
     }
-    int action[4][2]={{0,-1},{0,1},{-1,0},{1,0}};//上下左右;
+    int action[2][2]={{0,1},{1,0}};//下右;
     int count = 0;
 };
 
