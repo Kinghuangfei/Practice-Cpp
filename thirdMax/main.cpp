@@ -1,48 +1,46 @@
 #include<iostream>
 #include<vector>
-using namespace std;
+#include<limits.h>
+
+using namespace std; 
+
 class Solution {
   public:
     int thirdMax(vector<int>& nums) {
       int Max = INT_MIN,mid = INT_MIN,back = INT_MIN;
-      int flag = 1;
+      bool set = false;
+      int flag = 0;
       for(int i = 0;i<nums.size();i++){
-        if(nums[i]==INT_MIN){
-          flag=0;
+        if(nums[i]==INT_MIN&&!set){
+          flag++;
+          set = true;
         }
         if(Max<=nums[i]){
           if(nums[i]!=Max){
             back = mid;
             mid = Max;
             Max = nums[i];
+            flag++;
           }
         }else if(mid<=nums[i]){
           if(nums[i]!=mid){
             back = mid;
             mid = nums[i];
+            flag++;
           }
-        }else if(back<nums[i]){
+        }else if(back<=nums[i]){
+          flag++;
           back = nums[i];
         }
       }
-      int count = 0;
-      if(Max!=INT_MIN)
-        count++;
-      if(mid!=INT_MIN)
-        count++;
-      if(back!=INT_MIN||!flag)
-        count++;
-      if(back== INT_MIN){
-        if(flag||(!flag&&count<3))
-          return Max;
-      }
-      return back;
+      return flag>=3?back:Max;
     }
 };
 
-int mian(){
+int main(){
   int arr[]={1,3,2,5,6,7,9};
   vector<int> a(arr,arr+sizeof(arr)/sizeof(arr[0]));
   Solution test;
   cout<<test.thirdMax(a)<<endl;
+  return 0;
 }
