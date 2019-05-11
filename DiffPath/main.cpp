@@ -55,6 +55,33 @@ class Solution2 {
 
 };
 
+class Solution3 {
+  public:
+  int uniquePaths(int m, int n) {
+    int** dp= new int*[m];
+    for(int i = 0;i<m;i++){
+      dp[i] = new int[n]; 
+    }
+    if(m==1||n==1) return 1;
+    for(int i = 0;i<m;i++){
+      dp[i][0] = 1;//第一行都只能从左边来；都是一种
+
+    }
+    for(int j = 0;j<n;j++){
+      dp[0][j] = 1;//第一列都只能从上边来；都是一种
+
+    }
+    for(int i = 1;i<m;i++){
+      for(int j = 1;j<n;j++){
+        dp[i][j] = dp[i][j-1]+dp[i-1][j];//从左边来的可能加上从右边来的可能；
+
+      }
+
+    }
+    return dp[m-1][n-1];//返回右下角那个的可能
+  }
+};
+
 int main(){
   Solution test;
   Solution2 test2;
