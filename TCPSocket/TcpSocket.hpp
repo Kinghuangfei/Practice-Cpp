@@ -9,6 +9,7 @@
 #include<cstring>
 #include<signal.h>
 #include<pthread.h>
+#include<unordered_map>
 class Sock{
   private:
     std::string ip;
@@ -78,10 +79,24 @@ class Server{
   private:
     Sock sock;
     pthread_t ptid;
+    std::unordered_map<std::string,std::string> dict;
+    class getinfo{
+      public:
+        int sock;
+        Server* this_ptr;
+        getinfo(int sock_,Server*this_):sock(sock_),this_ptr(this_)
+        {  }
+    };
   public:
     Server(const short port_)
       :sock(port_)
-    {  }
+    {
+      dict.insert(std::make_pair("hello","你好"));
+      dict.insert(std::make_pair("bit","比特"));
+      dict.insert(std::make_pair("LinTong","临潼"));
+      dict.insert(std::make_pair("apple","苹果"));
+      dict.insert(std::make_pair("sust","陕西科技大学"));
+    }
     void InitSever(){
       signal(SIGCHLD,SIG_IGN);
       sock.SockCreate();
@@ -90,14 +105,20 @@ class Server{
     }
     static void* Service(void* arg){
       pthread_detach(pthread_self());//先把自己分离了，就不用等它了
-      int sock = *(int*)arg;
+      getinfo* info = (getinfo*)arg;
+      int sock = info->sock;
       char buf[1024];
       for(;;){
         ssize_t total=read(sock,buf,sizeof(buf)-1);//read返回0时代表对方关闭链接！
         if(total>0){
           buf[total]=0;
           std::cout<<buf<<std::endl;
-          write(sock,buf,strlen(buf));
+          std::string key = buf;
+          std::string val = info->this_ptr->dict[key];
+          if(val.empty()){
+            val="null";
+          }
+          write(sock,val.c_str(),val.size());
         }else if(total==0){
           std::cout<<"client is quit..."<<std::endl;
           break;
@@ -115,8 +136,9 @@ class Server{
         if(new_sock<0){
           continue;
         }
+        getinfo info(new_sock,this);
         std::cout<<"Get A New Client"<<std::endl;
-        pthread_create(&ptid,NULL,Service,(void*)&new_sock);
+        pthread_create(&ptid,NULL,Service,(void*)&info);
         //close(new_sock);//父进程因为不使用new_sock,所以关掉new_sock，子进程完了后会自动退出;
       }
     }
