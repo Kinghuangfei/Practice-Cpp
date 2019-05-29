@@ -10,6 +10,7 @@
 #include<signal.h>
 #include<pthread.h>
 #include<unordered_map>
+#include"ThreadPool.hpp"
 class Sock{
   private:
     std::string ip;
@@ -28,6 +29,8 @@ class Sock{
         std::cerr<<"socket error!"<<std::endl;
         exit(1);
       }
+      int opt = 1;
+      setsockopt(local_socket,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));//timewait下照样可以重启
     }
     void Bind(){
       struct sockaddr_in local;
@@ -40,7 +43,7 @@ class Sock{
         exit(2);
       }
     }
-    void Listen(){
+    void Listen(){//从底层拿新连接；
       if(listen(local_socket,5)<0){
         std::cerr<<"listen error"<<std::endl;
         exit(3);
@@ -80,6 +83,7 @@ class Server{
     Sock sock;
     pthread_t ptid;
     std::unordered_map<std::string,std::string> dict;
+  public:
     class getinfo{
       public:
         int sock;
@@ -87,7 +91,6 @@ class Server{
         getinfo(int sock_,Server*this_):sock(sock_),this_ptr(this_)
         {  }
     };
-  public:
     Server(const short port_)
       :sock(port_)
     {
@@ -103,10 +106,7 @@ class Server{
       sock.Bind();
       sock.Listen();
     }
-    static void* Service(void* arg){
-      pthread_detach(pthread_self());//先把自己分离了，就不用等它了
-      getinfo* info = (getinfo*)arg;
-      int sock = info->sock;
+    void Service(int sock){
       char buf[1024];
       for(;;){
         ssize_t total=read(sock,buf,sizeof(buf)-1);//read返回0时代表对方关闭链接！
@@ -114,7 +114,7 @@ class Server{
           buf[total]=0;
           std::cout<<buf<<std::endl;
           std::string key = buf;
-          std::string val = info->this_ptr->dict[key];
+          std::string val = dict[key];
           if(val.empty()){
             val="null";
           }
@@ -128,6 +128,11 @@ class Server{
         }
       }
       close(sock);
+    }
+    static void* Threadget(void*arg){
+      pthread_detach(pthread_self());//先把自己分离了，就不用等它了
+      getinfo* info = (getinfo*)arg;
+      info->this_ptr->Service(info->sock);
       return NULL;
     }
     void Run(){
@@ -136,9 +141,12 @@ class Server{
         if(new_sock<0){
           continue;
         }
-        getinfo info(new_sock,this);
-        std::cout<<"Get A New Client"<<std::endl;
-        pthread_create(&ptid,NULL,Service,(void*)&info);
+        ThreadPool pool;
+        Task t(new_sock,Service);
+        pool.AddTask(t);
+        //getinfo info(new_sock,this);
+        //std::cout<<"Get A New Client"<<std::endl;
+        //pthread_create(&ptid,NULL,Threadget,(void*)&info);
         //close(new_sock);//父进程因为不使用new_sock,所以关掉new_sock，子进程完了后会自动退出;
       }
     }
