@@ -78,11 +78,12 @@ class Sock{
     }
 };
 
+std::unordered_map<std::string,std::string> dict;
 class Server{
   private:
     Sock sock;
     pthread_t ptid;
-    std::unordered_map<std::string,std::string> dict;
+    ThreadPool pool;//规模是5的线程池；
   public:
     class getinfo{
       public:
@@ -99,6 +100,7 @@ class Server{
       dict.insert(std::make_pair("LinTong","临潼"));
       dict.insert(std::make_pair("apple","苹果"));
       dict.insert(std::make_pair("sust","陕西科技大学"));
+      pool.InitTheadPool();
     }
     void InitSever(){
       signal(SIGCHLD,SIG_IGN);
@@ -106,7 +108,7 @@ class Server{
       sock.Bind();
       sock.Listen();
     }
-    void Service(int sock){
+    static void Service(int sock){
       char buf[1024];
       for(;;){
         ssize_t total=read(sock,buf,sizeof(buf)-1);//read返回0时代表对方关闭链接！
@@ -129,23 +131,22 @@ class Server{
       }
       close(sock);
     }
-    static void* Threadget(void*arg){
-      pthread_detach(pthread_self());//先把自己分离了，就不用等它了
-      getinfo* info = (getinfo*)arg;
-      info->this_ptr->Service(info->sock);
-      return NULL;
-    }
+//    static void* Threadget(void*arg){
+//      pthread_detach(pthread_self());//先把自己分离了，就不用等它了
+//      getinfo* info = (getinfo*)arg;
+//      info->this_ptr->Service(info->sock);
+//      return NULL;
+//    }
     void Run(){
       while(1){
         int new_sock = sock.Accept();
         if(new_sock<0){
           continue;
         }
-        ThreadPool pool;
-        Task t(new_sock,Service);
+        std::cout<<"Get A New Client"<<std::endl;
+        Task t(new_sock,Server::Service);
         pool.AddTask(t);
         //getinfo info(new_sock,this);
-        //std::cout<<"Get A New Client"<<std::endl;
         //pthread_create(&ptid,NULL,Threadget,(void*)&info);
         //close(new_sock);//父进程因为不使用new_sock,所以关掉new_sock，子进程完了后会自动退出;
       }

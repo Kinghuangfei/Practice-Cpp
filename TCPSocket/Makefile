@@ -1,5 +1,5 @@
 .PHONY:all
-all:Client Server 
+all:clean Client Server 
 
 Client:TcpClient.cc 
 	g++ $^ -o $@ -std=c++11
