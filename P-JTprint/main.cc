@@ -23,20 +23,18 @@ class Print{
     pthread_cond_t sec;
     int k;
     int base=0;
-    int flag=0;
 };
 
 
 void* fun1(void * arg){
   Print* p=(Print*)arg;
   while(1){
-    while(p->base%2==1){
+    while(p->base%2==1||p->base>p->k){
+      pthread_cond_signal(&p->sec);
       if(p->base>p->k){
-        pthread_cond_broadcast(&p->sec);
         cout<<"pthread1 exit\n"<<endl;
         pthread_exit(NULL);
       }
-      pthread_cond_signal(&p->sec);
       pthread_cond_wait(&p->fir,&p->lock);
     }
     cout<<"Pthread 1-"<<pthread_self()<<":"<<p->base<<endl;
@@ -49,13 +47,10 @@ void* fun2(void * arg){
   Print* p=(Print*)arg;
   while(1){
     while(p->base%2==0||p->base>p->k){
+      pthread_cond_signal(&p->fir);
       if(p->base>p->k){
-        pthread_cond_broadcast(&p->fir);
         cout<<"pthread2 exit\n"<<endl;
         pthread_exit(NULL);
-      }
-      if(p->base){
-        pthread_cond_signal(&p->fir);
       }
       pthread_cond_wait(&p->sec,&p->lock);
     }
