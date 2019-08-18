@@ -1,24 +1,26 @@
 #include<iostream>
 #include<pthread.h>
-
-using namespace std;
+#include <unistd.h>
 
 class Print{
   public:
     Print(int K):k(K)
   {}
     ~Print(){
-      pthread_mutex_destroy(&lock);
+      pthread_mutex_destroy(&lock1);
+      pthread_mutex_destroy(&lock2);
       pthread_cond_destroy(&fir);
       pthread_cond_destroy(&sec);
     }
     void Init(){
-      pthread_mutex_init(&lock,NULL);
+      pthread_mutex_init(&lock1,NULL);
+      pthread_mutex_init(&lock2,NULL);
       pthread_cond_init(&fir,NULL);
       pthread_cond_init(&sec,NULL);
     }
   public:
-    pthread_mutex_t lock;
+    pthread_mutex_t lock1;
+    pthread_mutex_t lock2;
     pthread_cond_t fir;
     pthread_cond_t sec;
     int k;
@@ -32,12 +34,12 @@ void* fun1(void * arg){
     while(p->base%2==1||p->base>p->k){
       pthread_cond_signal(&p->sec);
       if(p->base>p->k){
-        cout<<"pthread1 exit\n"<<endl;
+        std::cout<<"pthread1 exit\n"<<std::endl;
         pthread_exit(NULL);
       }
-      pthread_cond_wait(&p->fir,&p->lock);
+      pthread_cond_wait(&p->fir,&p->lock1);
     }
-    cout<<"Pthread 1-"<<pthread_self()<<":"<<p->base<<endl;
+    std::cout<<"Pthread 1-"<<pthread_self()<<":"<<p->base<<std::endl;
     p->base+=1;
   }
   return NULL;
@@ -49,12 +51,12 @@ void* fun2(void * arg){
     while(p->base%2==0||p->base>p->k){
       pthread_cond_signal(&p->fir);
       if(p->base>p->k){
-        cout<<"pthread2 exit\n"<<endl;
+        std:: cout<<"pthread2 exit\n"<<std::endl;
         pthread_exit(NULL);
       }
-      pthread_cond_wait(&p->sec,&p->lock);
+      pthread_cond_wait(&p->sec,&p->lock2);
     }
-    cout<<"Pthread 2-"<<pthread_self()<<":"<<p->base<<endl;
+    std::cout<<"Pthread 2-"<<pthread_self()<<":"<<p->base<<std::endl;
     p->base+=1;
   }
   return NULL;
@@ -62,7 +64,7 @@ void* fun2(void * arg){
 
 int main(){
   int k;
-  cin>>k;
+  std::cin>>k;
   pthread_t tid[2];
   Print p(k);
   p.Init();
